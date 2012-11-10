@@ -70,11 +70,15 @@ if (!function_exists('get_attachment_id')) {
 					return $id;
 			}
 		}
-
-		return false;
+    
+    // This seems necessary, this function wasn't returning the ID otherwise
+    return $id;
+		//return false;
 	}
 }
 
+// No idea what this does
+// Maybe just for SVG and I can ignore it
 if (!function_exists('wppf_upload_mimes')) {
 	function wppf_upload_mimes($existing_mimes=array()) {
 		$existing_mimes['svg'] = 'mime/type';
@@ -82,6 +86,8 @@ if (!function_exists('wppf_upload_mimes')) {
 	}
 }
 
+
+// Again, no idea what's going on here, not getting an out put.
 if (!function_exists('wppf_svg_field_edit')) {
 	/**
 	 * Adding our custom fields to the $form_fields array
@@ -102,6 +108,7 @@ if (!function_exists('wppf_svg_field_edit')) {
 	}
 }
 
+// Maybe I can ignore all this SVG stuff?
 if (!function_exists('wppf_svg_field_save')) {
 	/**
 	 * @link http://net.tutsplus.com/tutorials/wordpress/creating-custom-fields-for-attachments-in-wordpress/
@@ -117,13 +124,15 @@ if (!function_exists('wppf_svg_field_save')) {
 	}
 }
 
+// Register the picturefill js file—this I know and need and it's working.
 if (!function_exists('wppf_script')) {
 	function wppf_script() {
-		wp_register_script('picturefill', plugins_url( 'picturefill.pictureelement.js', __FILE__ ));
+		wp_register_script('picturefill', plugins_url( 'picturefill.js', __FILE__ ));
 		wp_enqueue_script('picturefill');
 	}
 }
 
+// Does this search for <img> ?
 if (!function_exists('wppf_content')) {
 	function wppf_content($content) {
 		$content = preg_replace_callback('/<img[^>]+\>/i', "wppf_replace", $content);
@@ -131,6 +140,7 @@ if (!function_exists('wppf_content')) {
 	}
 }
 
+// I guess this isn't working - we're not matching the img.
 if (!function_exists('wppf_replace')) {
 	function wppf_replace($matches) {
 		$img = $matches[0];
@@ -141,11 +151,24 @@ if (!function_exists('wppf_replace')) {
 
 		// make sure we have an image src AND that it's a WP attachment
 		$src = array_search('src', $attributes);
+		
 		if ($src === false) { return $img; }
 		unset($attributes[$src]);
 		$src = $values[$src];
+		
 		$attachmentID = get_attachment_id($src);
-		if (empty($attachmentID)) { return $img; }
+		
+		// Debugging
+		echo "<br>The src is: " . $src . "<br>";
+		print_r ($attributes);
+		
+		echo "<br>The attachment_id output is: " . get_attachment_id($src);
+		echo "<br>The attachmentID is: " . $attachmentID;
+		
+		// If an ID isn't found, just return the plain <img>
+		if (empty($attachmentID)) {
+		  return $img;
+		}
 
 		$attachment 				= wp_get_attachment_metadata($attachmentID);
 		$attachment_image			= wp_get_attachment_image_src($attachmentID, 'full');
@@ -155,7 +178,7 @@ if (!function_exists('wppf_replace')) {
 
 		// picture tag
 		$output = '
-			<picture ';
+			<div data-picture data-';
 		foreach ($attributes as $key => $attribute) {
 			if ($values[$key] != '') {
 				$output .= $attribute . '="' . $values[$key] . '"';
@@ -178,13 +201,12 @@ if (!function_exists('wppf_replace')) {
 
 		// responsive raster images and fallback
 		$output .= '
-				<!-- Otherwise, fallback on rasters -->
-				<!-- <source srcset="' . $attachment_image_medium[0] . ' 1x, ' . $attachment_image_large[0] . ' 2x"> -->
-				<source srcset="' . $attachment_image_medium[0] . ' 1x, ' . $attachment_image_large[0] . ' 2x">
-				<!-- <source media="(min-width: 44em)" srcset="' . $attachment_image_large[0] . ' 1x, ' . $attachment_image[0] . ' 2x"> -->
-				<source media="(min-width: 44em)" srcset="' . $attachment_image_large[0] . ' 1x, ' . $attachment_image[0] . ' 2x">
-				<!-- <source media="(min-width: 85em)" src="' . $attachment_image[0] . '"> -->
-				<source media="(min-width: 85em)" src="' . $attachment_image[0] . '">
+		
+				<!-- default image size = medium -->
+				<div data-src="' . $attachment_image_medium[0] . '"></div>
+				
+				<!-- large image size -->
+				<div data-src="' . $attachment_image_large[0] . '" data-media="(min-width: 44em)"></div>
 
 				<!-- Fallback content for non-JS browsers. Same img src as the initial, unqualified source element. -->
 				<noscript><img src="' . $attachment_image_medium[0] . '"';
@@ -194,7 +216,7 @@ if (!function_exists('wppf_replace')) {
 			}
 		}
 		$output .= ' /></noscript>
-			</picture>
+			</div>
 		';
 
 		return $output;
