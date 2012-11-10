@@ -158,12 +158,10 @@ if (!function_exists('wppf_replace')) {
 		
 		$attachmentID = get_attachment_id($src);
 		
-		// Debugging
-		echo "<br>The src is: " . $src . "<br>";
-		print_r ($attributes);
-		
-		echo "<br>The attachment_id output is: " . get_attachment_id($src);
-		echo "<br>The attachmentID is: " . $attachmentID;
+		//echo "<br>The src is: " . $src . "<br>";
+		//print_r ($attributes);
+		//echo "<br>The attachment_id output is: " . get_attachment_id($src);
+		//echo "<br>The attachmentID is: " . $attachmentID;
 		
 		// If an ID isn't found, just return the plain <img>
 		if (empty($attachmentID)) {
@@ -176,7 +174,7 @@ if (!function_exists('wppf_replace')) {
 		$attachment_image_medium	= wp_get_attachment_image_src($attachmentID, 'medium');
 		$attachment_image_large		= wp_get_attachment_image_src($attachmentID, 'large');
 
-		// picture tag
+		// Picturefill markup, not proposed <picture> markup.
 		$output = '
 			<div data-picture data-';
 		foreach ($attributes as $key => $attribute) {
